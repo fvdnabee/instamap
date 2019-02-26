@@ -4,21 +4,35 @@ from the posts collection. The location objects are stored in MongoDB.
 """
 import asyncio
 import aiohttp
+import socket
 
 import pymongo
 from pymongo import MongoClient
 
 client = None
 db = None
+rate_limited = False
+n_rate_limited = 0
+
 
 async def process_unknown_locations(unknown_location_ids, batch_size):
+    global rate_limited, n_rate_limited
+
     n_batches = len(unknown_location_ids)//batch_size
     for i in range(n_batches):
+        if rate_limited:
+            i -= 1 # Redo the last batch
+            rate_limited = False
+
+            seconds = 2**(n_rate_limited - 1) * 10
+            print(f"Rate limited -> sleeping for {seconds} seconds")
+            await asyncio.sleep(seconds)
+
         batch_ids = unknown_location_ids[i*batch_size:(i+1)*batch_size]
 
         asyncio.create_task(retrieve_location_batch(batch_ids))
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
 
     # If necessary, fetch the last batch:
     if len(unknown_location_ids) % batch_size > 0:
@@ -26,15 +40,27 @@ async def process_unknown_locations(unknown_location_ids, batch_size):
         asyncio.create_task(retrieve_location_batch(batch_ids))
 
 async def retrieve_location_batch(batch_ids):
+    global rate_limited, n_rate_limited
 
-    async with aiohttp.ClientSession() as session:
+    conn = aiohttp.TCPConnector(force_close=True, family=socket.AF_INET) # Force IPv4
+    #session = ClientSession(connector=conn)
+    async with aiohttp.ClientSession(connector=conn) as session:
         for id in batch_ids:
             url = f"https://www.instagram.com/explore/locations/{id}/"
             params = {'__a': '1'}
             async with session.get(url, params=params) as resp:
-                print(f'Fetched {resp.url}, response status = {resp.status}')
-                loc_json = await resp.json()
-                process_loc_json(loc_json)
+                if resp.status == 429:
+                    if not rate_limited:
+                        n_rate_limited += 1
+
+                    print(f"Retrieved response status {resp.status}, setting rate_limited from {rate_limited} to True")
+                    rate_limited = True
+                else:
+                    rate_limited = False
+                    n_rate_limited = 0
+                    print(f'Fetched {resp.url}, response status = {resp.status}')
+                    loc_json = await resp.json()
+                    process_loc_json(loc_json)
 
 def process_loc_json(loc_json):
     loc = loc_json['graphql']['location']
@@ -53,6 +79,7 @@ def process_loc_json(loc_json):
 if __name__ == '__main__':
     client = MongoClient()
     db = client.instagram
+    rate_limited = False
 
     # find locations that we don't know yet:
     distinct_location_ids = db.posts.distinct('location.id') # this takes a while
