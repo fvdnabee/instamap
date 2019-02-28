@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8' />
+  <title>Instamap</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div id='map'></div>
+<script type="text/javascript">
+mapboxgl.accessToken = 'pk.eyJ1IjoiZnZkbmFiZWUiLCJhIjoiY2pzbjFqdHpvMDZzNTN5cWF0cmQzMWp3biJ9.zl-EkfsayaTbYcWYV0sPxw';
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/fvdnabee/cjsn6pf1v05621fmgbkbxiob2',
+  center: [12.071354, 46.606002],
+  zoom: 4.5
+});
+
+// TODO: do we want to redraw markers already on the map?
+markers_on_map = new Set([]);
+markers = [];
+
+map.on('load', function () {
+	bounds = map.getBounds();
+
+	bounds_changed(bounds);
+});
+
+map.on('moveend', function() {
+	bounds = map.getBounds();
+
+	bounds_changed(bounds);
+});
+
+function bounds_changed(bounds) {
+	bounds = bounds.toArray();
+	bounds = [bounds[0][0], bounds[0][1], bounds[1][0], bounds[0][1]];
+
+	// round off the elements in bounds:
+	fixed_length = 6;
+	bounds = bounds.map(function(each_element){
+    		return Number(each_element.toFixed(fixed_length));
+	});
+
+	bounds_uri_query = bounds.join(',');
+
+	var oReq = new XMLHttpRequest();
+	oReq.open('GET', '{{ url_for('get_map_entries') }}?b=' + bounds_uri_query);
+	oReq.responseType = "json";
+	oReq.onload = function() {
+	    if (oReq.status === 200) {
+		draw_map_entries(oReq.response);
+	    }
+	    else {
+	        alert('Request failed.  Returned status of ' + oReq.status);
+	    }
+	};
+	oReq.send();
+}
+
+function draw_map_entries(map_entries) {
+    // Remove all markers:
+    markers.forEach(function(m) { m.remove(); });
+    markers.length = 0;
+
+    // see: https://docs.mapbox.com/mapbox-gl-js/example/custom-marker-icons/
+    map_entries.forEach(function(map_entry) {
+        // create a DOM element for the marker
+        var el = document.createElement('div');
+
+        el.className = 'marker';
+        el.style.backgroundImage = 'url(' + map_entry.display_url + ')';
+
+	var w = map_entry.dimensions.width;
+	var h = map_entry.dimensions.height;
+
+	max_width_height = 80;
+	if(map.getZoom() < 3) { max_width_height = 40; }
+
+        var ratioX = max_width_height / w;
+        var ratioY = max_width_height / h;
+        var ratio = Math.min(ratioX, ratioY);
+
+        var newWidth = Math.floor(w * ratio);
+        var newHeight = Math.floor(h * ratio);
+
+        el.style.width = newWidth + 'px';
+        el.style.height = newHeight + 'px';
+	el.style.backgroundSize = el.style.width + ' ' + el.style.height;
+
+        //el.addEventListener('click', function() {
+        //    window.alert(map_entry.caption + '\n\n' + map_entry.url);
+        //});
+
+	var date = new Date(map_entry.ts * 1000);
+        // add marker to map
+        var marker = new mapboxgl.Marker(el)
+            .setLngLat([map_entry.lng, map_entry.lat])
+            .setPopup(new mapboxgl.Popup({ offset: 25 }) // add popups
+		    .setHTML('<p style="margin: 0"><strong><a href="https://www.instagram.com/' + map_entry.username + '">' + map_entry.username + '</a></strong> • <a href="' + map_entry.url + '" title="View post on instagram.com">' + date.toDateString() + '</a></p>' +
+			    '<p style="margin: 0; font-family: monospace, monospace;">' + map_entry.loc_name + '</p>' +
+			    '<img src="' + map_entry.display_url + '" style="max-width: 400px;" alt="' + map_entry.caption + '" />' +
+			    '<p style="max-width: 400px; word-wrap: break-word">' + map_entry.caption + '</p>' +
+			    '<a href="' + map_entry.url + '" title="View post on instagram.com">' + map_entry.url + '</a>'))
+            .addTo(map);
+
+	markers.push(marker);
+    });
+
+}
+
+</script>
+</body>
+</html>
