@@ -14,7 +14,6 @@ import argparse
 
 client = None
 db = None
-posts_collection = None
 
 
 def get_hashtags_from_post(post):
@@ -54,11 +53,11 @@ if __name__ == '__main__':
             id = post['id']
             shortcode = post['shortcode']
 
-            if not posts_collection.find_one({'id': id}):
+            if not db[config.posts_collection].find_one({'id': id}):
                 hashtags = get_hashtags_from_post(post)
                 post['hashtags'] = hashtags
 
-                mongodb_post_id = posts_collection.insert_one(post).inserted_id
+                mongodb_post_id = db[config.posts_collection].insert_one(post).inserted_id
                 print("Inserted post\tid = {}\tshortcode = {}\tmongoDB_id = {}".format(id, shortcode, mongodb_post_id))
                 n_inserted += 1
             else:
