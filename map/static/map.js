@@ -6,6 +6,9 @@ var timestamps;
 var markers_on_map = new Set([]);
 var markers = [];
 var jsonResponse;
+
+var rssv = eval(document.getElementById('mymapscript').getAttribute('data-rssv'));
+var rsev = eval(document.getElementById('mymapscript').getAttribute('data-rsev'));
 var max_width_height = 50; // 50 for zoomlevel < 6.5 and 100 for zl >= 6.5
 
 map.on('load', function () {

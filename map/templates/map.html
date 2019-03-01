@@ -4,46 +4,35 @@
   <meta charset='utf-8' />
   <title>Instamap</title>
   <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-
-  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
-
-  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
 
-<!-- DevExtreme -->
-<script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.1.0.min.js"></script>
-<!-- DevExtreme themes -->
-<link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/18.2.5/css/dx.common.css" />
-<!-- <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/18.2.5/css/dx.light.css" /> -->
+  <!-- mapbox-gl-js -->
+  <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
+  <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css' rel='stylesheet' />
 
-<!-- DevExtreme library -->
-<script type="text/javascript" src="https://cdn3.devexpress.com/jslib/18.2.5/js/dx.all.js"></script>
-<!-- <script type="text/javascript" src="https://cdn3.devexpress.com/jslib/18.2.5/js/dx.mobile.js"></script> -->
-<!-- <script type="text/javascript" src="https://cdn3.devexpress.com/jslib/18.2.5/js/dx.web.js"></script> -->
-<!-- <script type="text/javascript" src="https://cdn3.devexpress.com/jslib/18.2.5/js/dx.viz.js"></script> -->
-<!-- <script type="text/javascript" src="https://cdn3.devexpress.com/jslib/18.2.5/js/dx.viz-web.js"></script> -->
+  <!-- DevExtreme -->
+  <script type="text/javascript" src="https://ajax.aspnetcdn.com/ajax/jquery/jquery-3.1.0.min.js"></script>
+  <!-- DevExtreme themes -->
+  <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/18.2.5/css/dx.light.css" />
+  <!-- DevExtreme library -->
+  <script type="text/javascript" src="https://cdn3.devexpress.com/jslib/18.2.5/js/dx.all.js"></script>
 </head>
 <body>
-
 <div id='map'></div>
 <div class='update-markers'><button id="btn-set-bounds">Set bounds</button></div>
-<div class='date-filter'>
-<div id="range"></div>
-</div>
+<div class='date-filter'><div id="range"></div> </div>
+
 <script type="text/javascript">
 mapboxgl.accessToken = 'pk.eyJ1IjoiZnZkbmFiZWUiLCJhIjoiY2pzbjFqdHpvMDZzNTN5cWF0cmQzMWp3biJ9.zl-EkfsayaTbYcWYV0sPxw';
-
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/fvdnabee/cjsn6pf1v05621fmgbkbxiob2',
   center: [12.071354, 46.606002],
   zoom: 4.5
 });
-
-var rssv = [{{ range_selector_start_value }}],
-	rsev = [{{ range_selector_end_value }}];
 </script>
 
-<script type="text/javascript" src="{{ url_for('static', filename='map.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='map.js') }}" id="mymapscript" data-rssv="[{{ range_selector_start_value }}]" data-rsev="[{{ range_selector_end_value }}]"></script>
+
 </body>
 </html>
