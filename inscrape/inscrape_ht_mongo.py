@@ -2,6 +2,8 @@
 This program uses the explore API of instagram to discover posts tagged with a
 specific hash tag and stores the posts in a MonogDB running locally.
 """
+import config
+
 import asyncio
 import aiohttp
 import re
@@ -70,7 +72,7 @@ async def parse_edges(edges_json, hashtag):
         node_json = edge['node']
         shortcode = node_json['shortcode']
 
-        if not db.posts.find_one({'id': node_json['id']}):
+        if not db[config.posts_collection].find_one({'id': node_json['id']}):
             task = asyncio.create_task(get_post(shortcode, node_json, hashtag))
         else:
             print(f"Post {node_json['id']} allready in database")
@@ -87,13 +89,13 @@ async def get_post(shortcode, node_json, hashtag):
     id = post['id']
     shortcode = post['shortcode']
 
-    if not db.posts.find_one({'id': id}):
+    if not db[config.posts_collection].find_one({'id': id}):
         post['explore_hashtag'] = hashtag # add the hashtag by which we found this post
 
         hashtags = get_hashtags_from_post(post)
         post['hashtags'] = hashtags
 
-        mongodb_post_id = db.posts.insert_one(post).inserted_id
+        mongodb_post_id = db[config.posts_collection].insert_one(post).inserted_id
         print("Inserted post\tid = {}\tshortcode = {}\tmongoDB_id = {}".format(id, shortcode, mongodb_post_id))
     else:
         print(f"Post {id} allready in database")
@@ -137,8 +139,8 @@ if __name__ == '__main__':
     db = client.instagram
 
     # create index over id and short code:
-    _ = db.posts.create_index([('id', pymongo.ASCENDING)], unique=True)
-    _ = db.posts.create_index([('shortcode', pymongo.ASCENDING)], unique=True)
+    _ = db[config.posts_collection].create_index([('id', pymongo.ASCENDING)], unique=True)
+    _ = db[config.posts_collection].create_index([('shortcode', pymongo.ASCENDING)], unique=True)
 
     import signal, sys
     def signal_handler(signal, frame):

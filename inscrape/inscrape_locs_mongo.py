@@ -2,6 +2,8 @@
 This program uses the API of instagram to retrieve location objects for the posts
 from the posts collection. The location objects are stored in MongoDB.
 """
+import config
+
 import asyncio
 import aiohttp
 import socket
@@ -82,7 +84,7 @@ if __name__ == '__main__':
     rate_limited = False
 
     # find locations that we don't know yet:
-    distinct_location_ids = db.posts.distinct('location.id') # this takes a while
+    distinct_location_ids = db[config.posts_collection].distinct('location.id') # this takes a while
     cursor_locations = db.locations.find({'id': {'$in': distinct_location_ids}})
     known_location_ids = [loc['id'] for loc in cursor_locations]
     unknown_location_ids = list(set(distinct_location_ids).symmetric_difference(set(known_location_ids)))
