@@ -8,7 +8,8 @@ from pymongo import MongoClient
 from quart import Quart, request, url_for, jsonify, render_template
 
 app = Quart(__name__)
-db = None
+client = MongoClient()
+db = client.instagram
 
 @app.route('/')
 async def index():
@@ -41,7 +42,5 @@ async def get_map_entries(subpath):
     return jsonify(map_entries)
 
 if __name__ == "__main__":
-    client = MongoClient()
-    db = client.instagram
 
     app.run('localhost', port=5000)
