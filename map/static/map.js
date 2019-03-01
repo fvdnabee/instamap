@@ -31,6 +31,8 @@ map.on('zoomend', function() {
 
 
 $(function(){
+	if (typeof DevExpress == "undefined") return;
+
      rangeSelector = $("#range").dxRangeSelector({
         margin: {
             top: 0
@@ -150,8 +152,17 @@ function draw_map_entries() {
 }
 
 function setTimestamps() {
-	var beginDate = new Date(rangeSelector.getValue()[0]),
+	var beginDate;
+	var endDate;
+
+	if (typeof rangeSelector == "undefined") {
+		beginDate = new Date(rssv[0], rssv[1], rssv[2]);
+		endDate = new Date(rsev[0], rsev[1], rsev[2]);
+
+	} else {
+		beginDate = new Date(rangeSelector.getValue()[0]),
 		endDate = new Date(rangeSelector.getValue()[1]);
+	}
 
 	var tsBegin = Math.round(beginDate.getTime() / 1000);
 	var tsEnd = Math.round(endDate.getTime() / 1000);
