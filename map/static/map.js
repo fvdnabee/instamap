@@ -1,6 +1,7 @@
 var bounds;
 var rangeSelector;
 var timestamps;
+var ready = false;
 
 // TODO: do we want to redraw markers already on the map?
 var markers_on_map = new Set([]);
@@ -12,8 +13,10 @@ var rsev = eval(document.getElementById('mymapscript').getAttribute('data-rsev')
 var max_width_height = 50; // 50 for zoomlevel < 6.5 and 100 for zl >= 6.5
 
 map.on('load', function () {
-	setTimestamps();
-	setBounds();
+	ready = true;
+
+	setTimestamps(new Date(rssv[0], rssv[1], rssv[2]), new Date(rsev[0], rsev[1], rsev[2]));
+	setBounds(map.getBounds().toArray());
 
 	updateMap();
 });
@@ -31,7 +34,6 @@ map.on('zoomend', function() {
 //map.on('moveend', function() {
 //	updateMap();
 //});
-
 
 $(function(){
 	if (typeof DevExpress == "undefined") return;
@@ -64,13 +66,17 @@ $(function(){
         },
         //title: "Display posts from the following dates:",
         onValueChanged: function (e) {
-			setTimestamps();
+			var beginDate = new Date(rangeSelector.getValue()[0]);
+			var endDate = new Date(rangeSelector.getValue()[1]);
+			setTimestamps(beginDate, endDate);
+
 			updateMap();
         }
     }).dxRangeSelector("instance");
 });
 
 function updateMap() {
+	if (!ready) return;
 	var bounds_uri_query = bounds.join('/');
 	var ts_uri_query = timestamps.join('/');
 
@@ -154,28 +160,15 @@ function draw_map_entries() {
     });
 }
 
-function setTimestamps() {
-	var beginDate;
-	var endDate;
-
-	if (typeof rangeSelector == "undefined") {
-		beginDate = new Date(rssv[0], rssv[1], rssv[2]);
-		endDate = new Date(rsev[0], rsev[1], rsev[2]);
-
-	} else {
-		beginDate = new Date(rangeSelector.getValue()[0]),
-		endDate = new Date(rangeSelector.getValue()[1]);
-	}
-
+function setTimestamps(beginDate, endDate) {
 	var tsBegin = Math.round(beginDate.getTime() / 1000);
 	var tsEnd = Math.round(endDate.getTime() / 1000);
 
 	timestamps = [tsBegin, tsEnd];
 }
 
-function setBounds() {
-	var newBounds = map.getBounds().toArray();
-	newBounds = [newBounds[0][0], newBounds[0][1], newBounds[1][0], newBounds[1][1]];
+function setBounds(b) {
+	var newBounds = [b[0][0], b[0][1], b[1][0], b[1][1]]; // flatten array
 
 	// round off the elements in newBounds:
 	var fixed_length = 6;
@@ -187,6 +180,32 @@ function setBounds() {
 }
 
 document.getElementById("btn-set-bounds").onclick = function(){
-	setBounds();
+	setBounds(map.getBounds().toArray());
+	updateMap();
+};
+
+document.getElementById("btn-silkroad").onclick = function(){
+	var beginDate = new Date(2018, 01, 01);
+	var endDate = new Date(2018, 12, 30);
+	if (typeof rangeSelector != "undefined") rangeSelector.setValue([beginDate, endDate]);
+	setTimestamps(beginDate, endDate);
+
+	var bounds = [ [-4.507774877735272, 2.6602810808397237], [146.11767796084553, 61.04584048146046] ];
+	map.fitBounds(bounds);
+	setBounds(bounds);
+
+	updateMap();
+};
+
+document.getElementById("btn-santiago").onclick = function(){
+	var beginDate = new Date(2017, 9, 9);
+	var endDate = new Date(2017, 12, 31);
+	if (typeof rangeSelector != "undefined")  rangeSelector.setValue([beginDate, endDate]);
+	setTimestamps(beginDate, endDate);
+
+	var bounds = [ [ -39.27630475468817, 26.781210313359125], [37.25033209346199, 54.85322398321597] ]
+	map.fitBounds(bounds);
+	setBounds(bounds);
+
 	updateMap();
 };

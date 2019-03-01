@@ -7,7 +7,7 @@ html, body {
 
 .date-filter {
     position:fixed;
-    top: 20px;
+    top: 10px;
     width: 75%;
     left: 50%;
     transform: translateX(-50%);
@@ -22,13 +22,43 @@ html, body {
     padding: 10px 10px;
 }
 
+.silkroad-tour {
+    position:fixed;
+    top: 10px;
+    right: 10px;
+    text-align: center;
+    z-index: 9000000;
+    opacity: 1;
+    background: white;
+    font: 14px Arial, Helvetica, sans-serif;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 10px 10px;
+}
+
+.santiago-tour {
+    position:fixed;
+    top: 60px;
+    right: 10px;
+    text-align: center;
+    z-index: 9000000;
+    opacity: 1;
+    background: white;
+    font: 14px Arial, Helvetica, sans-serif;
+    background: rgba(255,255,255,0.8);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 10px 10px;
+}
+
 .update-markers {
     position:fixed;
     bottom: 20px;
     right: 10px;
     z-index: 9000000;
     background: white;
-    font: 20px Arial, Helvetica, sans-serif;
+    font: 14px Arial, Helvetica, sans-serif;
     background: rgba(255,255,255,0.8);
     box-shadow: 0 0 15px rgba(0,0,0,0.2);
     opacity: 1;

@@ -19,9 +19,6 @@
 </head>
 <body>
 <div id='map'></div>
-<div class='update-markers'><button id="btn-set-bounds">Set bounds</button></div>
-<div class='date-filter'><div id="range"></div> </div>
-
 <script type="text/javascript">
 mapboxgl.accessToken = 'pk.eyJ1IjoiZnZkbmFiZWUiLCJhIjoiY2pzbjFqdHpvMDZzNTN5cWF0cmQzMWp3biJ9.zl-EkfsayaTbYcWYV0sPxw';
 const map = new mapboxgl.Map({
@@ -31,6 +28,12 @@ const map = new mapboxgl.Map({
   zoom: 4.5
 });
 </script>
+
+<div class='date-filter'><div id="range"></div> </div>
+
+<button class='silkroad-tour' id="btn-silkroad">Silk road tour</button>
+<button class='santiago-tour' id="btn-santiago">Santiago tour</button>
+<button class='update-markers' id="btn-set-bounds">Set bounds</button>
 
 <script type="text/javascript" src="{{ url_for('static', filename='map.js') }}" id="mymapscript" data-rssv="[{{ range_selector_start_value }}]" data-rsev="[{{ range_selector_end_value }}]"></script>
 
