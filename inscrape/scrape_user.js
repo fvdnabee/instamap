@@ -9,13 +9,14 @@
  * Webdeveloper Web console:
  * i) Disable CSP: e.g. by setting security.csp.enable to False in about:config
  * ii) Disable CORS: e.g. via the CORS Everywhere extension: https://addons.mozilla.org/en-US/firefox/addon/cors-everywhere/
+ * Don't forget to undo these changes after you have run the script!
  *
  * To execute the script, surf to www.instagram.com/<username>/?__a=1. First
  * replace user_id below with the id of the user. Then copy/paste
  * this script into the web developer Web console. At the end a json list of
  * objects should be on your clipboard. If not, reexecute the line copy(...
  * again manually. Save this to a file `user.json' and run the
- * inscrape_json_mongo.py script.
+ * inscrape_json_mongo.py script. Now re-enable CSP and CORS in Firefox.
  */
 
 var user_id = xxx;
