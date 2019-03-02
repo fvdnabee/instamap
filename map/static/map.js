@@ -8,12 +8,17 @@ var markers_on_map = new Set([]);
 var markers = [];
 var jsonResponse;
 
+var layer_ids = ["santiago-track", "silkroad-0-track", "silkroad-1-track", "silkroad-2-track", "silkroad-3-track", "silkroad-4-track"]
+var tile_ids = ["fvdnabee.5dbhhek7", "fvdnabee.cwn75xfz", "fvdnabee.8uncf7n4", "fvdnabee.1o18xqpn", "fvdnabee.3k6un6tc", "fvdnabee.arcp8dgf"]
+
 var rssv = eval(document.getElementById('mymapscript').getAttribute('data-rssv'));
 var rsev = eval(document.getElementById('mymapscript').getAttribute('data-rsev'));
 var max_width_height = 50; // 50 for zoomlevel < 6.5 and 100 for zl >= 6.5
 
 map.on('load', function () {
 	ready = true;
+
+	addTrackLayers();
 
 	setTimestamps(new Date(rssv[0], rssv[1], rssv[2]), new Date(rsev[0], rsev[1], rsev[2]));
 	setBounds(map.getBounds().toArray());
@@ -34,6 +39,29 @@ map.on('zoomend', function() {
 //map.on('moveend', function() {
 //	updateMap();
 //});
+
+function addTrackLayers (){
+	for (var i = 0; i < layer_ids.length; i++) {
+		map.addLayer({
+			"id": layer_ids[i],
+			"type": "line",
+			"source": {
+			type: 'vector',
+			url: 'mapbox://' + tile_ids[i]
+			},
+			"source-layer": "tracks",
+			"layout": {
+			"line-join": "round",
+			"line-cap": "round"
+			},
+			"paint": {
+			"line-color": "#ff0000",
+			"line-width": 4
+			}
+		});
+	}
+
+}
 
 $(function(){
 	if (typeof DevExpress == "undefined") return;
@@ -180,6 +208,9 @@ function setBounds(b) {
 }
 
 document.getElementById("btn-set-bounds").onclick = function(){
+	// show all track layers:
+    layer_ids.forEach(function(id) { map.setLayoutProperty(id, 'visibility', 'visible'); });
+
 	setBounds(map.getBounds().toArray());
 	updateMap();
 };
@@ -194,6 +225,12 @@ document.getElementById("btn-silkroad").onclick = function(){
 	map.fitBounds(bounds);
 	setBounds(bounds);
 
+	// show silkroad track layers, hide santiago layer:
+	var layersToHide = [layer_ids[0]];
+	var layersToShow = [layer_ids[1], layer_ids[2], layer_ids[3], layer_ids[4], layer_ids[5]];
+    layersToHide.forEach(function(id) { map.setLayoutProperty(id, 'visibility', 'none'); });
+    layersToShow.forEach(function(id) { map.setLayoutProperty(id, 'visibility', 'visible'); });
+
 	updateMap();
 };
 
@@ -206,6 +243,12 @@ document.getElementById("btn-santiago").onclick = function(){
 	var bounds = [ [ -39.27630475468817, 26.781210313359125], [37.25033209346199, 54.85322398321597] ]
 	map.fitBounds(bounds);
 	setBounds(bounds);
+
+	// show santiago track layer, hide other layers:
+	var layersToHide = [layer_ids[1], layer_ids[2], layer_ids[3], layer_ids[4], layer_ids[5]];
+	var layersToShow = [layer_ids[0]];
+    layersToHide.forEach(function(id) { map.setLayoutProperty(id, 'visibility', 'none'); });
+    layersToShow.forEach(function(id) { map.setLayoutProperty(id, 'visibility', 'visible'); });
 
 	updateMap();
 };
