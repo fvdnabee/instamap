@@ -17,7 +17,7 @@ import argparse
 client = None
 db = None
 
-async def explore_hashtag(hashtag, end_cursor, num_pages, skip_pages, sleep_time=1):
+async def explore_hashtag(hashtag, end_cursor, update_display_url, num_pages, skip_pages, sleep_time=1):
     if num_pages == 0:
         await asyncio.sleep(10) # wait 10 seconds for all remaining tasks to finish
 
@@ -28,7 +28,7 @@ async def explore_hashtag(hashtag, end_cursor, num_pages, skip_pages, sleep_time
 
         return # stop crawling when N reaches 0
 
-    print(f"explore_hashtag({hashtag}, {end_cursor}, {num_pages}, {skip_pages})")
+    print(f"explore_hashtag({hashtag}, {end_cursor}, {update_display_url}, {num_pages}, {skip_pages})")
 
     url = f"https://www.instagram.com/explore/tags/{hashtag}/"
     params = {'__a': '1'}
@@ -45,10 +45,10 @@ async def explore_hashtag(hashtag, end_cursor, num_pages, skip_pages, sleep_time
 
     if not skip_page:
         media_edges = data['graphql']['hashtag']['edge_hashtag_to_media']['edges']
-        asyncio.create_task(parse_edges(media_edges, hashtag))
+        asyncio.create_task(parse_edges(media_edges, hashtag, update_display_url))
 
         top_posts_edges = data['graphql']['hashtag']['edge_hashtag_to_top_posts']['edges']
-        asyncio.create_task(parse_edges(top_posts_edges, hashtag))
+        asyncio.create_task(parse_edges(top_posts_edges, hashtag, update_display_url))
     else:
         print(f'Skipping this page ({skip_pages})')
 
@@ -57,12 +57,12 @@ async def explore_hashtag(hashtag, end_cursor, num_pages, skip_pages, sleep_time
         end_cursor = data['graphql']['hashtag']['edge_hashtag_to_media']['page_info']['end_cursor'] if has_next_page else None
 
         if skip_page:
-            asyncio.create_task(explore_hashtag(hashtag, end_cursor, num_pages - 1, skip_pages - 1, sleep_time))
+            asyncio.create_task(explore_hashtag(hashtag, end_cursor, update_display_url, num_pages - 1, skip_pages - 1, sleep_time))
         else:
             await asyncio.sleep(sleep_time)
-            asyncio.create_task(explore_hashtag(hashtag, end_cursor, num_pages - 1, skip_pages, sleep_time))
+            asyncio.create_task(explore_hashtag(hashtag, end_cursor, update_display_url, num_pages - 1, skip_pages, sleep_time))
 
-async def parse_edges(edges_json, hashtag):
+async def parse_edges(edges_json, hashtag, update_display_url):
     #i = 0
     for edge in edges_json:
         # if i == 3:
@@ -71,11 +71,18 @@ async def parse_edges(edges_json, hashtag):
 
         node_json = edge['node']
         shortcode = node_json['shortcode']
+        post_doc = db[config.posts_collection].find_one({'id': node_json['id']})
 
-        if not db[config.posts_collection].find_one({'id': node_json['id']}):
+        if not post_doc:
             task = asyncio.create_task(get_post(shortcode, node_json, hashtag))
         else:
-            print(f"Post {node_json['id']} allready in database")
+            print(f"Post {node_json['id']} allready in database", end='')
+            if update_display_url:
+                post_doc['display_url'] = node_json['display_url']
+                db[config.posts_collection].save(post_doc)
+                print(". Updated display_url", end='')
+            print(".") # this will also print the newline
+
 
 async def get_post(shortcode, node_json, hashtag):
     url = f"https://www.instagram.com/p/{shortcode}/"
@@ -127,6 +134,8 @@ if __name__ == '__main__':
     parser.add_argument('-ht', '--hashtag', help='Hashtag to crawl, without # sign.', default='bicycletouring')
     parser.add_argument('-sc', '--start_cursor', help='cursor of where to start crawling.', default=None)
     parser.add_argument('-s', '--sleep_time', type=int, help='Time to wait between subsequent requests to explore/tags (in s).', default=1)
+    parser.add_argument('-dp', '--display_url', action='store_true', help='Update display_urls for existing posts.')
+    parser.set_defaults(display_url=False)
     args = parser.parse_args()
 
     num_pages = args.num_pages
@@ -134,6 +143,7 @@ if __name__ == '__main__':
     instagram_hashtag = args.hashtag
     start_cursor = args.start_cursor
     sleep_time = args.sleep_time
+    update_display_url = args.display_url
 
     client = MongoClient()
     db = client.instagram
@@ -151,5 +161,5 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     loop = asyncio.get_event_loop()
-    asyncio.ensure_future(explore_hashtag(instagram_hashtag, start_cursor, num_pages, skip_pages, sleep_time), loop=loop)
+    asyncio.ensure_future(explore_hashtag(instagram_hashtag, start_cursor, update_display_url, num_pages, skip_pages, sleep_time), loop=loop)
     loop.run_forever()
