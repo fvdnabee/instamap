@@ -23,6 +23,7 @@ async def index():
 
 @app.route('/get_map_entries/<path:subpath>')
 async def get_map_entries(subpath):
+    # Parse request URI
     if subpath[-1] == '/':
         subpath = subpath[:-1] # remove trailing slash
 
@@ -31,12 +32,40 @@ async def get_map_entries(subpath):
     ne_lng, ne_lat = float(tokens[2]), float(tokens[3])
     ts_begin, ts_end = int(tokens[4]), int(tokens[5])
 
-    print(f'{request.path} -> returning JSON for input: {sw_lng} {sw_lat} {ne_lng} {ne_lat} {ts_begin} {ts_end}')
+    username = request.args.get('username') #if key doesn't exist, returns None
+    hashtag = request.args.get('hashtag') #if key doesn't exist, returns None
 
+    sort = request.args.get('sort') #if key doesn't exist, returns None
+
+    print(f'{request.path} -> returning JSON for input: {sw_lng} {sw_lat} {ne_lng} {ne_lat} {ts_begin} {ts_end} (u={username} ht={hashtag})')
+
+    # Build the filter dict
     f = {'ts': {'$gte': ts_begin, '$lte': ts_end},
          'loc': {'$within': {'$box': [[sw_lng, sw_lat], [ne_lng, ne_lat]]}}}
 
-    mapentries = db.mapentries.find(filter=f, projection={'_id': False}, sort=[('likes', pymongo.DESCENDING)], limit=100)
+    if username:
+        f['username'] = {'username': username}
+    if hashtag:
+        f['hashtag'] = {'hashtag': hashtag}
+
+    # Use aggregation instead of find, so we can retrieve random documents:
+    aggr_dicts = list()
+    aggr_dicts.append({'$match': f})
+
+    N = 100
+    if not sort or sort == 0: # Get N most popular documents (by likes)
+        aggr_dicts.append({'$sort': {'likes': pymongo.DESCENDING}})
+        aggr_dicts.append({'$limit': N})
+    elif sort == 1: # Get N most recent documents
+        aggr_dicts.append({'$sort': {'ts': pymongo.DESCENDING}})
+        aggr_dicts.append({'$limit': N})
+    elif sort == 2: # Get N random documents:
+        aggr_dicts.append({'$sample': {'size': N}})
+
+    # exclude _id field:
+    aggr_dicts.append({'$project': {'_id': False}})
+
+    mapentries = db.mapentries.aggregate(aggr_dicts)
     map_entries = list(mapentries)
 
     return jsonify(map_entries)
