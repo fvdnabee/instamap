@@ -44,7 +44,7 @@ async def get_map_entries(subpath):
 
     sort = request.args.get('sort') #if key doesn't exist, returns None
 
-    print(f'{request.path} -> returning JSON for input: {sw_lng} {sw_lat} {ne_lng} {ne_lat} {ts_begin} {ts_end} (u={username} ht={hashtag})')
+    print(f'{request.path} -> returning JSON for input: {sw_lng} {sw_lat} {ne_lng} {ne_lat} {ts_begin} {ts_end} (username={username} hashtag={hashtag} sort={sort})')
 
     # Build the filter dict
     f = {'ts': {'$gte': ts_begin, '$lte': ts_end},
@@ -60,14 +60,14 @@ async def get_map_entries(subpath):
     aggr_dicts.append({'$match': f})
 
     N = 100
-    if not sort or sort == 0: # Get N most popular documents (by likes)
-        aggr_dicts.append({'$sort': {'likes': pymongo.DESCENDING}})
-        aggr_dicts.append({'$limit': N})
-    elif sort == 1: # Get N most recent documents
+    if sort == '1': # Get N most recent documents
         aggr_dicts.append({'$sort': {'ts': pymongo.DESCENDING}})
         aggr_dicts.append({'$limit': N})
-    elif sort == 2: # Get N random documents:
+    elif sort == '2': # Get N random documents:
         aggr_dicts.append({'$sample': {'size': N}})
+    else: #if not sort or sort == 0 or everything else -> # Get N most popular documents (by likes)
+        aggr_dicts.append({'$sort': {'likes': pymongo.DESCENDING}})
+        aggr_dicts.append({'$limit': N})
 
     # exclude _id field:
     aggr_dicts.append({'$project': {'_id': False}})
