@@ -1,12 +1,13 @@
 import config
 import time
 from pymongo import MongoClient, GEO2D
+import pymongo
 
 if __name__ == '__main__':
     client = MongoClient()
     db = client.instagram
 
-    db.mapentries.delete_many({})
+    # db.mapentries.delete_many({})
 
     known_location_ids = db.locations.distinct('id') # this takes a while
     posts_with_known_loc = db[config.posts_collection].find({"location.id": {"$in": known_location_ids}})
@@ -18,6 +19,9 @@ if __name__ == '__main__':
     for post in posts_with_known_loc:
         # print(post)
         loc = db.locations.find_one({'id': post['location']['id']})
+        if not loc: continue
+        if loc['lng'] == None or loc['lat'] == None:
+            continue
 
         mapentry = {}
         mapentry['shortcode'] = post['shortcode']
@@ -38,8 +42,16 @@ if __name__ == '__main__':
         mapentry['username'] = post['owner']['username']
         # mapentry['full_name'] = post['owner']['full_name']
         mapentry['likes'] = post['edge_media_preview_like']['count']
+        mapentry['hashtags'] = post['hashtags']
 
-        db.mapentries.insert_one(mapentry)
+        try:
+            db.mapentries.insert_one(mapentry)
+        except pymongo.errors.WriteError as e:
+            print("Error caught: {}".format(e))
+            print("post object: {}".format(post))
+            print("loc object: {}\n".format(loc))
+
+
         n_mapenties += 1
     t1 = time.time()
 
