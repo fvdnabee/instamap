@@ -31,16 +31,12 @@ const map = new mapboxgl.Map({
 
 <div class='date-filter'><div id="range"></div> </div>
 
-<select class="select-show" id="select-show">
-    <option value="">-- Show --</option>
-    <option value="most_liked" selected>Most liked</option>
-    <option value="most_recent">Most recent</option>
-    <option value="random">Random</option>
-</select>
-
+<button class='silkroad-tour' id="btn-silkroad">Silk road tour</button>
+<button class='santiago-tour' id="btn-santiago">Santiago tour</button>
 <button class='update-markers' id="btn-set-bounds">Set bounds</button>
+<a href="https://floriscycles.com" title="Visit homepage"><button class='homepage'>floriscycles.com</button></a>
 
-<script type="text/javascript" src="{{ url_for('static', filename='map.js') }}" id="mymapscript" data-rssv="[{{ range_selector_start_value }}]" data-rsev="[{{ range_selector_end_value }}]" data-hashtag="{{ hashtag_filter }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='map.js') }}" id="mymapscript" data-rssv="[{{ range_selector_start_value }}]" data-rsev="[{{ range_selector_end_value }}]" data-username="floriscycles"></script>
 
 </body>
 </html>

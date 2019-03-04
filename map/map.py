@@ -19,7 +19,14 @@ async def index():
     end_ts = db.mapentries.find_one(sort=[('ts', pymongo.DESCENDING)])['ts'] + 60*60*24*31
     end_value = datetime.utcfromtimestamp(end_ts).strftime('%Y, %m, %d')
 
-    return await render_template('map.html', range_selector_start_value=start_value, range_selector_end_value=end_value)
+    return await render_template('map.html', range_selector_start_value=start_value, range_selector_end_value=end_value, hashtag_filter='bicycletouring')
+
+@app.route('/floriscycles')
+async def floriscycles():
+    start_value = '2017, 09, 09'
+    end_value = '2019, 01, 14'
+
+    return await render_template('map_floriscycles.html', range_selector_start_value=start_value, range_selector_end_value=end_value)
 
 @app.route('/get_map_entries/<path:subpath>')
 async def get_map_entries(subpath):
@@ -44,9 +51,9 @@ async def get_map_entries(subpath):
          'loc': {'$within': {'$box': [[sw_lng, sw_lat], [ne_lng, ne_lat]]}}}
 
     if username:
-        f['username'] = {'username': username}
+        f['username'] = username
     if hashtag:
-        f['hashtag'] = {'hashtag': hashtag}
+        f['hashtags'] = hashtag
 
     # Use aggregation instead of find, so we can retrieve random documents:
     aggr_dicts = list()
@@ -64,6 +71,7 @@ async def get_map_entries(subpath):
 
     # exclude _id field:
     aggr_dicts.append({'$project': {'_id': False}})
+    print(aggr_dicts)
 
     mapentries = db.mapentries.aggregate(aggr_dicts)
     map_entries = list(mapentries)
