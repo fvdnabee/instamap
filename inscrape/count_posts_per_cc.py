@@ -1,10 +1,7 @@
 from pymongo import MongoClient
 import csv
 
-def main():
-    client = MongoClient()
-    db = client.instagram
-
+def count_posts_per_cc(db, output=False):
     # Get some stats from the DB:
     n_missing = 0
     country_codes = {}
@@ -30,8 +27,14 @@ def main():
         post_cc = address_json['country_code']
         country_codes[post_cc] = country_codes.get(post_cc, 0) + 1
 
-    print("%d/%d" % (n_missing, n_posts))
-    print(country_codes)
+    if output:
+        print("%d/%d" % (n_missing, n_posts))
+        print(country_codes)
+
+    return country_codes
 
 if __name__ == '__main__':
-    main()
+    client = MongoClient()
+    db = client.instagram
+
+    _ = count_posts_per_cc(db, True)

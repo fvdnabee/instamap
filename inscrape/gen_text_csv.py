@@ -1,11 +1,20 @@
 from pymongo import MongoClient
+from count_posts_per_cc import count_posts_per_cc
 import csv
 
 def main():
     client = MongoClient()
     db = client.instagram
 
-    n_lines = 0
+    country_codes = count_posts_per_cc(db, False)
+    country_codes.pop('') # remove empty country codes
+    popular_country_codes = []
+    POPULAR_THRESHOLD = 9
+    for k, v in country_codes.items():
+        if v > POPULAR_THRESHOLD:
+            popular_country_codes.append(k)
+
+    n_posts = 0
     with open('text.csv', 'w', newline='') as csvfile:
         post_writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
 
@@ -30,6 +39,9 @@ def main():
             if not post_cc: # note that there there are quite a few posts with an empty country_code
                 # print("Skipping post with empty country_code")
                 continue
+            if not post_cc in popular_country_codes:
+                # print("Skipping post with country_code that has less than %d posts" % POPULAR_THRESHOLD)
+                continue
 
             if not post['edge_media_to_caption']['edges']:
                 print("Skipping post with missing text")
@@ -38,9 +50,9 @@ def main():
 
             output_line = [post_id, post_cc, post_text]
             post_writer.writerow(output_line)
-            n_lines += 1
+            n_posts += 1
 
-    print("Written %d lines to text.csv" % n_lines)
+    print("Written %d posts to text.csv" % n_posts)
 
 if __name__ == '__main__':
     main()
