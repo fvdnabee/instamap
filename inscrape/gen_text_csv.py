@@ -15,8 +15,10 @@ def main():
             popular_country_codes.append(k)
 
     n_posts = 0
-    with open('text.csv', 'w', newline='') as csvfile:
+    csv_filename = 'posts.csv'
+    with open(csv_filename, 'w', newline='') as csvfile:
         post_writer = csv.writer(csvfile, delimiter=' ', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        post_writer.writerow(['id', 'country_code', 'text']) # write header
 
         all_posts_with_location = db.posts.find({'location': {'$ne': None}})
         for post in all_posts_with_location:
@@ -40,7 +42,7 @@ def main():
                 # print("Skipping post with empty country_code")
                 continue
             if not post_cc in popular_country_codes:
-                # print("Skipping post with country_code that has less than %d posts" % POPULAR_THRESHOLD)
+                # print("Skipping post with country_code that has less than {} posts".format(POPULAR_THRESHOLD))
                 continue
 
             if not post['edge_media_to_caption']['edges']:
@@ -52,7 +54,7 @@ def main():
             post_writer.writerow(output_line)
             n_posts += 1
 
-    print("Written %d posts to text.csv" % n_posts)
+    print("Written {} posts to {}".format(n_posts, csv_filename))
 
 if __name__ == '__main__':
     main()
