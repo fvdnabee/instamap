@@ -88,6 +88,7 @@ if __name__ == '__main__':
     cursor_locations = db.locations.find({'id': {'$in': distinct_location_ids}})
     known_location_ids = [loc['id'] for loc in cursor_locations]
     unknown_location_ids = list(set(distinct_location_ids).symmetric_difference(set(known_location_ids)))
+    print("{} locations unknown, starting to fetch them".format(len(unknown_location_ids)))
 
     # for every location.id in the list, send a request to instagram to
     # retrieve its details and store it in MongoDB
